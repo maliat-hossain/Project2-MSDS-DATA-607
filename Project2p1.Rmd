@@ -1,0 +1,349 @@
+---
+title: "Project 2"
+author: "Maliat"
+date: "3/8/2021"
+output: 
+  prettydoc::html_pretty:
+    theme: cayman
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+```{r include=FALSE}
+library(tidyverse)
+library(tidyr)
+library(dplyr)
+library(stringr)
+library(magrittr)
+library(sjmisc)
+library(Hmisc)
+library(expss)
+library(kableExtra)
+library(naniar)
+library(readr)
+installed.packages("readxl")
+library(readxl)
+library(kableExtra)
+
+```
+# **Bivariate Relationship Between Women's Participation in Economy and GDP:**
+### For the purpose of this analysis two datasets named Social Protection and Equity and Women's Economic Empowerment is selected from The UNICEF's State of the World’s Children 2019 Statistical Tables.
+
+```{r}
+EconomicIndicatorGDP1<-read.csv("https://raw.githubusercontent.com/maliat-hossain/UNICEF-Datasets/main/GDP.csv")
+head(EconomicIndicatorGDP1)%>%
+  kbl() %>%
+  kable_material(c("striped"))
+```
+### The analysis only requires column 1 and 14. The columns are assigned name.
+```{r}
+names(EconomicIndicatorGDP1)[1] <- "NameofCountries1"
+names(EconomicIndicatorGDP1)[14] <- "GDP"
+
+```
+### Column 1 and 14 is selected.
+```{r}
+### selecting only Countris name and GDP from the EconomicIndicatorGDP1 dataset
+RefEconomicIndicatorGDP1<-EconomicIndicatorGDP1 %>% dplyr::select(1, 14)
+
+
+```
+
+```{r}
+### removing unnecessary rows
+RefEconomicIndicatorGDP1<-anti_join(RefEconomicIndicatorGDP1,RefEconomicIndicatorGDP1[1:3,])
+
+
+
+
+```
+### Unnecessary punctuation is removed.
+```{r}
+RefEconomicIndicatorGDP1 <- filter(RefEconomicIndicatorGDP1,GDP!="?")
+head(RefEconomicIndicatorGDP1)%>%
+knitr::kable(caption = "Table 1:GDP by countries in 2019 ")%>%
+  kableExtra::kable_styling(bootstrap_options = "striped")
+
+
+```
+### The data frame named "WOMEN'S ECONOMIC EMPOWERMENT" is downloaded.
+```{r}
+Womenempowerment<-read.csv("https://raw.githubusercontent.com/maliat-hossain/UNICEF-Datasets/main/Table-16-Womens-EN-1.csv")
+head(Womenempowerment)%>%
+  kbl() %>%
+  kable_material(c("striped"))
+```
+### The necessary column are selected.
+```{r}
+Womenempowerment1<-Womenempowerment %>% dplyr::select(2, 17,23)
+
+
+```
+
+
+### Name of the columns are assigned.
+```{r}
+names(Womenempowerment1)[1] <- "NameofCountries1"
+names(Womenempowerment1)[2] <- "Men_partcipation_rate_in_economy"
+names(Womenempowerment1)[3] <- "Womenen_partcipation_rate_in_economy"
+
+
+```
+### unnecessary rows and puntuation marks are removed.
+```{r}
+Womenempowerment1<-anti_join(Womenempowerment1,Womenempowerment1[1:3,])
+
+
+```
+
+
+
+```{r}
+Womenempowerment1<-anti_join(Womenempowerment1,Womenempowerment1[1,])
+
+
+```
+```{r}
+Womenempowerment1 <- filter(Womenempowerment1,Men_partcipation_rate_in_economy!="?")
+Womenempowerment1 <- filter(Womenempowerment1,Womenen_partcipation_rate_in_economy!="?")
+head(Womenempowerment1)%>%
+knitr::kable(caption = "Table 2:Women's participation in Economy ")%>%
+  kableExtra::kable_styling(bootstrap_options = "striped")
+
+
+
+```
+### Two data frames regarding the GDP and women's participation in the economy is joined for the convinience of analysis.
+```{r}
+fullJoinGDP <- full_join(RefEconomicIndicatorGDP1,Womenempowerment1,by="NameofCountries1")
+View(fullJoinGDP)%>%
+  kbl() %>%
+  kable_material(c("striped"))
+```
+### na values are removed from the dataframe.
+```{r}
+
+fullJoinGDP<-na.omit(fullJoinGDP)
+
+```
+
+
+### Rows from 1 to 135 only contains data regarding United Nation's member countries.Summary values on the basis of continents are excluded for the purpose of analysis.
+
+
+```{r}
+GDP_and_Womenempowerment1 <- fullJoinGDP[1:135,]
+view(GDP_and_Womenempowerment1)%>%
+knitr::kable(caption = "Table 3:Women's participation in Economy and GDP ")%>%
+  kableExtra::kable_styling(bootstrap_options = "striped")
+
+```
+### The correlation between the women's representation in the economy and GDP of a country is calculated. There is a correlation between women's involvement in the economy and a strong GDP.
+```{r}
+correlate<-data.frame(GDP_and_Womenempowerment1$GDP,GDP_and_Womenempowerment1$Womenen_partcipation_rate_in_economy)
+correlate2<-rcorr(as.matrix(correlate))
+correlate2
+```
+
+
+# **Bivariate analysis of nutritious food consumption and children's mortality rate:**
+### This analysis will quantify the relatinship between nutrituous food consumption and low birth  rate.
+### This analysis includes datasets nutrition datasets from The State of the World’s Children 2019 Statistical Tables.
+### I have chosen the discussion dataset suggested by Maria Alejandra Ginorio, named Nutrition:Newborn,Infant,and Young children from UNICEF's State of the World’s Children 2019 Statistical Tables.
+
+```{r}
+Children_Nutrition_UNICEF<-read_csv("https://raw.githubusercontent.com/maliat-hossain/UNICEF-Nutrition-Data/main/Children%20Nutrition%20Facts.csv", locale = readr::locale(encoding = "latin1"))
+```
+### Helpful column names are assigned to required columns for the analysis and required columns are selected using dplyr.
+```{r}
+names(Children_Nutrition_UNICEF)[2] <- "NameoftheCountries"
+names(Children_Nutrition_UNICEF)[3] <- "Low_Birthweight"
+names(Children_Nutrition_UNICEF)[11] <- "Introduction_to_Solid_SemiSolid_soft_foods"
+names(Children_Nutrition_UNICEF)[25] <- "Zero_Vegetable_or_Fruit_Consumption"
+
+
+```
+
+```{r}
+Children_Nutrition_UNICEF1<-Children_Nutrition_UNICEF %>% dplyr::select(2,3, 11,25)
+view(Children_Nutrition_UNICEF1)%>%
+  kbl() %>%
+  kable_material(c("striped"))
+```
+### Unnecessary rows are removed.
+```{r}
+Children_Nutrition_UNICEF1<-anti_join(Children_Nutrition_UNICEF1,Children_Nutrition_UNICEF1[1:5,])
+```
+### Necessary rows containg countries name are selected.
+```{r}
+Children_Nutrition_UNICEF2<-Children_Nutrition_UNICEF1[1:196,]
+```
+
+```{r}
+
+head(Children_Nutrition_UNICEF2)%>%
+knitr::kable(caption = "Table 4:Understanding of Nutritious Diet for Children and Low Birthweight ")%>%
+  kableExtra::kable_styling(bootstrap_options = "striped")
+
+
+
+```
+### Unnecessary punctuation is removed first transforming the values as numeric. After the transformation the punctuation is replaced as na. na values are omitted afterwords.
+```{r}
+Children_Nutrition_UNICEF2$Low_Birthweight <- as.numeric(Children_Nutrition_UNICEF2$Low_Birthweight)
+Children_Nutrition_UNICEF2[!is.na(Children_Nutrition_UNICEF2$Low_Birthweight), ]
+
+Children_Nutrition_UNICEF2$Introduction_to_Solid_SemiSolid_soft_foods<- as.numeric(Children_Nutrition_UNICEF2$Introduction_to_Solid_SemiSolid_soft_foods)
+
+Children_Nutrition_UNICEF2[!is.na(Children_Nutrition_UNICEF2$Introduction_to_Solid_SemiSolid_soft_foods), ]
+
+Children_Nutrition_UNICEF2$Zero_Vegetable_or_Fruit_Consumption<- as.numeric(Children_Nutrition_UNICEF2$Zero_Vegetable_or_Fruit_Consumption)
+
+Children_Nutrition_UNICEF2[!is.na(Children_Nutrition_UNICEF2$Zero_Vegetable_or_Fruit_Consumption), ]
+
+head(Children_Nutrition_UNICEF2)
+```
+
+
+```{r}
+
+Children_Nutrition_UNICEF2<-na.omit(Children_Nutrition_UNICEF2)
+head(Children_Nutrition_UNICEF2)
+
+```
+
+
+
+### Only Latin Americans countries are selected for this analysis.After removing countries containg na values remaing Latin American countries are selected through filteration.
+
+
+```{r}
+Countries_String<-"Belize|Cuba|Dominican Republic|El Salvador|Guatemala|Mexico|Paraguay|Peru"
+Latin_America_Children_Nutrition<-Children_Nutrition_UNICEF2 %>%
+     filter(str_detect(NameoftheCountries,Countries_String))
+```
+
+```{r}
+view(Latin_America_Children_Nutrition)%>%
+knitr::kable(caption = "Table 5:Analysis of Latin American  Children's Low Birthweight and Nutritious Diet ")%>%
+  kableExtra::kable_styling(bootstrap_options = "striped")
+
+```
+
+
+### The pearson's correlation between the nutrious food and low birthweight is calculated to measure the bivariate relatiship between low birthweight and nutritios food consumption in the Latin American countries.However, the correlation is not strong enough.
+```{r}
+correlate1<-data.frame(Latin_America_Children_Nutrition$Low_Birthweight,Latin_America_Children_Nutrition$Zero_Vegetable_or_Fruit_Consumption)
+correlate3<-rcorr(as.matrix(correlate1))
+correlate3
+```
+```{r}
+ggplot(data =Latin_America_Children_Nutrition,aes(y=Low_Birthweight,x=Zero_Vegetable_or_Fruit_Consumption) )+
+  geom_point()
+
+```
+
+
+
+```{r}
+correlate4<-data.frame(Latin_America_Children_Nutrition$Low_Birthweight,Latin_America_Children_Nutrition$Introduction_to_Solid_SemiSolid_soft_foods)
+correlate5<-rcorr(as.matrix(correlate4))
+correlate5
+
+```
+```{r}
+
+ggplot(data =Latin_America_Children_Nutrition,aes(y=Low_Birthweight,x=Introduction_to_Solid_SemiSolid_soft_foods) )+
+  geom_point()
+```
+
+
+# *Bivariate relationship between Child Mortality Rate and GDP:*
+
+### For this analysis Child mortality rate from the UNICEF's The State of the World’s Children 2019 Statistical Tables is selected. 
+```{r}
+Child_Mortality_Rate<-read.csv("https://raw.githubusercontent.com/maliat-hossain/UNICEF-Datasets/main/Table-2-Child-Mortality-EN.csv")
+head(Child_Mortality_Rate)%>%
+  kbl() %>%
+  kable_material(c("striped"))
+```
+### Required columns are selected and named. Children's mortality rate from the year of 2018 is selected.
+```{r}
+
+names(Child_Mortality_Rate)[1] <- "NameofCountries1"
+names(Child_Mortality_Rate)[6] <- "mortality_rate"
+head(Child_Mortality_Rate)%>%
+knitr::kable(caption = "Table 6:Children's Mortality Rate ")%>%
+  kableExtra::kable_styling(bootstrap_options = "striped")
+
+
+```
+
+```{r}
+RefChild_Mortality_Rate<-Child_Mortality_Rate %>% dplyr::select(1, 6)
+view(RefChild_Mortality_Rate)%>%
+  kbl() %>%
+  kable_material(c("striped"))
+
+```
+
+```{r}
+##RefChild_Mortality_Rate%>%
+ ## kbl() %>%
+  ##kable_material(c("striped"))
+```
+
+```{r}
+### removing unnecessary rows
+RefChild_Mortality_Rate<-anti_join(RefChild_Mortality_Rate,RefChild_Mortality_Rate[1:3,])
+head(RefChild_Mortality_Rate)%>%
+  kbl() %>%
+  kable_material(c("striped"))
+
+```
+### puncuations from the datasets are removed. 
+```{r}
+
+
+RefChild_Mortality_Rate$mortality_rate<-as.numeric(RefChild_Mortality_Rate$mortality_rate)
+RefChild_Mortality_Rate[!is.na(RefChild_Mortality_Rate$mortality_rate), ]
+view(RefChild_Mortality_Rate)%>%
+knitr::kable(caption = "Table 6:Children's Mortality rate around the world in 2018 ")%>%
+  kableExtra::kable_styling(bootstrap_options = "striped")
+
+```
+
+### Two dataframes regarding children's mortality rate and GDP information are joined.
+```{r}
+fullJoinGDPANDMortalityRate <- full_join(RefEconomicIndicatorGDP1,RefChild_Mortality_Rate,by="NameofCountries1")
+View(fullJoinGDPANDMortalityRate)
+```
+### na values are omitted. Required values from UNICEF member countries are sected. Summary values are excluded.
+```{r}
+#fullJoinGDP<-na.omit(fullJoinGDP)
+fullJoinGDPANDMortalityRate<-na.omit(fullJoinGDPANDMortalityRate)
+AnalyzingGDPandMortalityRate<-fullJoinGDPANDMortalityRate[1:189,]
+view(AnalyzingGDPandMortalityRate)%>%
+knitr::kable(caption = "Table 7: Analyzing GDP of countriesChildren's Mortality rate around the world in 2018 ")%>%
+  kableExtra::kable_styling(bootstrap_options = "striped")
+```
+### The bivariate relationship between GDP and children's mortality rate is measured. However the relationship is not strong.However,It is really unfortunate to see the high amount of children mortality rate in many countries. I really hope one day it will be eradicated.
+```{r}
+correlate7<-data.frame(AnalyzingGDPandMortalityRate$GDP,AnalyzingGDPandMortalityRate$mortality_rate)
+correlate8<-rcorr(as.matrix(correlate7))
+correlate8
+
+```
+
+
+
+```{r}
+library(ggplot2)
+ggplot(data =AnalyzingGDPandMortalityRate,aes(y=AnalyzingGDPandMortalityRate$mortality_rate,x=AnalyzingGDPandMortalityRate$GDP) )+
+  geom_point()
+```
+
+### Source: The State of the World’s Children 2019 Statistical Tables. (2019). UNICEF Data: Monitoring the Situation of Children and Women. https://data.unicef.org/resources/dataset/sowc-2019-statistical-tables/
